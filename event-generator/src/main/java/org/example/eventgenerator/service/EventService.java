@@ -3,9 +3,11 @@ package org.example.eventgenerator.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.eventgenerator.dto.EventMessage;
+import org.example.eventgenerator.dto.EventResponseDTO;
 import org.example.eventgenerator.entity.Event;
 import org.example.eventgenerator.repository.EventRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -13,12 +15,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@KafkaListener(topics = "${kafka.topics.processed:events.processed}",
+        groupId = "${spring.kafka.consumer.group-id}")
 public class EventService {
+
+
 
     private final EventRepository eventRepository;
     private final KafkaTemplate<String, EventMessage> kafkaTemplate;
@@ -100,6 +107,29 @@ public class EventService {
     /**
      * Ручная генерация события (для тестирования)
      */
+    @Transactional
+    public void processConfirmation(EventResponseDTO response) {
+        try {
+            log.info("Received confirmation for event: {}", response.getOriginalEventId());
+
+            Optional<Event> eventOpt = eventRepository.findById(response.getOriginalEventId());
+
+            if (eventOpt.isPresent()) {
+                Event event = eventOpt.get();
+                event.setIsProcessed(true);
+                event.setProcessedAt(response.getProcessedAt());
+                eventRepository.save(event);
+
+                log.info("Event marked as processed: {}", response.getOriginalEventId());
+            } else {
+                log.warn("Event not found for confirmation: {}", response.getOriginalEventId());
+            }
+        } catch (Exception e) {
+            log.error("Error processing confirmation for event: {}",
+                    response.getOriginalEventId(), e);
+        }
+    }
+
     @Transactional
     public Event generateEventManually(String eventType, String customPayload) {
         try {

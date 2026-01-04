@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/events")
+@RequestMapping("/api/v1/events")
 @RequiredArgsConstructor
 public class EventController {
 
@@ -48,7 +48,7 @@ public class EventController {
      * GET /api/events/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Event> getEventById(@PathVariable UUID id) {
+    public ResponseEntity<Event> getEventById(@PathVariable UUID id) { //:TODO dto
         Event event = eventService.getEventById(id);
         if (event != null) {
             return ResponseEntity.ok(event);
