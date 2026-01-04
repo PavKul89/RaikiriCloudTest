@@ -42,6 +42,26 @@ services:
       timeout: 10s
       retries: 5
 
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      kafka:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      # Если нужно подключение с хоста — можно добавить второй кластер:
+      # KAFKA_CLUSTERS_1_NAME: host
+      # KAFKA_CLUSTERS_1_BOOTSTRAPSERVERS: host.docker.internal:29092
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   postgres:
     image: postgres:16
     container_name: postgres-events
