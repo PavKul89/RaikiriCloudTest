@@ -24,7 +24,7 @@ services:
         condition: service_healthy
     ports:
       - "9092:9092"
-      - "29092:29092"  # для внешнего доступа из хоста (удобно для dev)
+      - "29092:29092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -53,9 +53,7 @@ services:
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
-      # Если нужно подключение с хоста — можно добавить второй кластер:
-      # KAFKA_CLUSTERS_1_NAME: host
-      # KAFKA_CLUSTERS_1_BOOTSTRAPSERVERS: host.docker.internal:29092
+
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
       interval: 30s

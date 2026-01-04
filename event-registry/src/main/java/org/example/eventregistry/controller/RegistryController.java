@@ -19,9 +19,6 @@ public class RegistryController {
 
     private final EventProcessingService eventService;
 
-    /**
-     * GET /api/registry/health - Проверка работоспособности
-     */
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
         Map<String, Object> response = new HashMap<>();
@@ -32,9 +29,6 @@ public class RegistryController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * GET /api/registry/stats - Статистика
-     */
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getStats() {
         Map<String, Object> stats = new HashMap<>();
@@ -45,18 +39,12 @@ public class RegistryController {
         return ResponseEntity.ok(stats);
     }
 
-    /**
-     * GET /api/registry/events - Получить все зарегистрированные события
-     */
     @GetMapping("/events")
     public ResponseEntity<List<RegisteredEvent>> getAllEvents() {
         List<RegisteredEvent> events = eventService.getAllEvents();
         return ResponseEntity.ok(events);
     }
 
-    /**
-     * GET /api/registry/events/{id} - Получить событие по ID регистрации
-     */
     @GetMapping("/events/{id}")
     public ResponseEntity<RegisteredEvent> getEventById(@PathVariable UUID id) {
         RegisteredEvent event = eventService.getEventById(id);
@@ -66,9 +54,6 @@ public class RegistryController {
         return ResponseEntity.notFound().build();
     }
 
-    /**
-     * GET /api/registry/events/original/{originalId} - Найти по оригинальному ID
-     */
     @GetMapping("/events/original/{originalId}")
     public ResponseEntity<RegisteredEvent> getEventByOriginalId(@PathVariable UUID originalId) {
         RegisteredEvent event = eventService.getEventByOriginalId(originalId);
@@ -78,12 +63,8 @@ public class RegistryController {
         return ResponseEntity.notFound().build();
     }
 
-    /**
-     * DELETE /api/registry/events/{id} - Удалить зарегистрированное событие
-     */
     @DeleteMapping("/events/{id}")
     public ResponseEntity<Void> deleteEvent(@PathVariable UUID id) {
-        // В реальном приложении здесь должна быть логика удаления
         return ResponseEntity.noContent().build();
     }
 }

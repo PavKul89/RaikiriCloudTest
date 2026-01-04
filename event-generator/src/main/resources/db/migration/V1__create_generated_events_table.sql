@@ -1,4 +1,3 @@
--- Таблица для хранения сгенерированных событий
 CREATE TABLE IF NOT EXISTS generated_events (
     id UUID PRIMARY KEY,
     event_type VARCHAR(100) NOT NULL,
@@ -9,8 +8,6 @@ CREATE TABLE IF NOT EXISTS generated_events (
     is_processed BOOLEAN NOT NULL DEFAULT FALSE
     );
 
-
--- Комментарии к таблице и колонкам
 COMMENT ON TABLE generated_events IS 'Таблица для хранения сгенерированных событий';
 COMMENT ON COLUMN generated_events.id IS 'Уникальный идентификатор события';
 COMMENT ON COLUMN generated_events.event_type IS 'Тип события';

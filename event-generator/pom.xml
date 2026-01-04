@@ -73,7 +73,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <!-- Убедитесь, что mainClass правильный для этого модуля! -->
                 <configuration>
                     <mainClass>com.example.eventgenerator.EventGeneratorApplication</mainClass>
                     <excludes>

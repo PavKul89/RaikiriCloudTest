@@ -3,11 +3,9 @@ package org.example.eventgenerator.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.eventgenerator.dto.EventMessage;
-import org.example.eventgenerator.dto.EventResponseDTO;
 import org.example.eventgenerator.entity.Event;
 import org.example.eventgenerator.repository.EventRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -15,20 +13,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@KafkaListener(topics = "${kafka.topics.processed:events.processed}",
-        groupId = "${spring.kafka.consumer.group-id}")
 public class EventService {
-
-
 
     private final EventRepository eventRepository;
     private final KafkaTemplate<String, EventMessage> kafkaTemplate;
+    private final EventConfirmationService confirmationService; // Добавили
 
     private static final String EVENT_TOPIC = "events.created";
 
@@ -38,13 +32,6 @@ public class EventService {
     @Value("${event.generation.enabled:true}")
     private boolean generationEnabled;
 
-    @Value("${event.generation.interval:10000}")
-    private long generationInterval;
-
-    /**
-     * Генерирует событие по таймеру
-     * Выполняется каждые 10 секунд по умолчанию
-     */
     @Scheduled(fixedRateString = "${event.generation.interval:10000}")
     @Transactional
     public void generateEvent() {
@@ -54,9 +41,8 @@ public class EventService {
         }
 
         try {
-            log.info("🚀 Starting event generation...");
+            log.info(" Starting event generation...");
 
-            // 1. Создаем объект событие в базе данных
             Event event = new Event();
             event.setEventType("SYSTEM_EVENT");
             event.setServiceName(serviceName);
@@ -64,10 +50,9 @@ public class EventService {
             event.setIsProcessed(false);
 
             Event savedEvent = eventRepository.save(event);
-            log.info("✅ Event created in database. ID: {}, Type: {}, Service: {}",
+            log.info(" Event created in database. ID: {}, Type: {}, Service: {}",
                     savedEvent.getId(), savedEvent.getEventType(), savedEvent.getServiceName());
 
-            // 2. Создаем сообщение для Kafka
             EventMessage message = new EventMessage(
                     savedEvent.getId(),
                     savedEvent.getEventType(),
@@ -76,14 +61,13 @@ public class EventService {
                     savedEvent.getCreatedAt()
             );
 
-            log.info("📤 Preparing to send Kafka message. Topic: {}, Event ID: {}",
+            log.info(" Preparing to send Kafka message. Topic: {}, Event ID: {}",
                     EVENT_TOPIC, savedEvent.getId());
 
-            // 3. Отправляем сообщение в Kafka
             kafkaTemplate.send(EVENT_TOPIC, message)
                     .whenComplete((result, ex) -> {
                         if (ex == null) {
-                            log.info("✅ Event message sent to Kafka successfully. " +
+                            log.info(" Event message sent to Kafka successfully. " +
                                             "Topic: {}, Partition: {}, Offset: {}, " +
                                             "Creator Service: {}, Event ID: {}",
                                     result.getRecordMetadata().topic(),
@@ -92,41 +76,15 @@ public class EventService {
                                     serviceName,
                                     savedEvent.getId());
                         } else {
-                            log.error("❌ Failed to send event message to Kafka. Event ID: {}",
+                            log.error(" Failed to send event message to Kafka. Event ID: {}",
                                     savedEvent.getId(), ex);
                         }
                     });
 
-            log.info("🎉 Event generation completed successfully. Event ID: {}", savedEvent.getId());
+            log.info(" Event generation completed successfully. Event ID: {}", savedEvent.getId());
 
         } catch (Exception e) {
-            log.error("❌ Error generating event", e);
-        }
-    }
-
-    /**
-     * Ручная генерация события (для тестирования)
-     */
-    @Transactional
-    public void processConfirmation(EventResponseDTO response) {
-        try {
-            log.info("Received confirmation for event: {}", response.getOriginalEventId());
-
-            Optional<Event> eventOpt = eventRepository.findById(response.getOriginalEventId());
-
-            if (eventOpt.isPresent()) {
-                Event event = eventOpt.get();
-                event.setIsProcessed(true);
-                event.setProcessedAt(response.getProcessedAt());
-                eventRepository.save(event);
-
-                log.info("Event marked as processed: {}", response.getOriginalEventId());
-            } else {
-                log.warn("Event not found for confirmation: {}", response.getOriginalEventId());
-            }
-        } catch (Exception e) {
-            log.error("Error processing confirmation for event: {}",
-                    response.getOriginalEventId(), e);
+            log.error(" Error generating event", e);
         }
     }
 
@@ -160,17 +118,16 @@ public class EventService {
         }
     }
 
-    // Методы для статистики
     public long getTotalEvents() {
         return eventRepository.count();
     }
 
     public long getProcessedEvents() {
-        return eventRepository.countByIsProcessed(true);
+        return confirmationService.getProcessedEventsCount();
     }
 
     public long getUnprocessedEvents() {
-        return eventRepository.countByIsProcessed(false);
+        return confirmationService.getUnprocessedEventsCount();
     }
 
     public List<Event> getAllEvents() {

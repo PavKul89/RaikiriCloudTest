@@ -10,43 +10,30 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-    baseline-version: 0
-    locations: classpath:db/migration
 
   kafka:
-    enabled: true
     bootstrap-servers: localhost:29092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
-        spring.json.type.mapping: eventMessage:com.example.eventgenerator.dto.EventMessage
         spring.json.add.type.headers: false
-    consumer:
-      group-id: event-generator-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "org.example.eventgenerator.dto"
-        spring.json.type.mapping: eventMessage:com.example.eventgenerator.dto.EventMessage
 
 server:
   port: 8081
 
+event:
+  generation:
+    enabled: true
+    interval: 10000
+
 logging:
   level:
-    com.example.eventgenerator: INFO
+    org.example.eventgenerator: INFO
     org.springframework.kafka: INFO
     org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

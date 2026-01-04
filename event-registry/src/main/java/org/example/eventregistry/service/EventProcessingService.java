@@ -34,13 +34,11 @@ public class EventProcessingService {
         try {
             log.info("Received event JSON: {}", eventJson);
 
-            // Парсим JSON вручную
             EventData eventData = objectMapper.readValue(eventJson, EventData.class);
 
             log.info("=== START PROCESSING EVENT ===");
             log.info("Event ID: {}", eventData.getEventId());
 
-            // Проверяем дубликаты
             RegisteredEvent existingEvent = eventRepository
                     .findByOriginalEventId(eventData.getEventId());
 
@@ -49,7 +47,6 @@ public class EventProcessingService {
                 return;
             }
 
-            // Создаем запись в БД
             RegisteredEvent registeredEvent = new RegisteredEvent();
             registeredEvent.setOriginalEventId(eventData.getEventId());
             registeredEvent.setEventType(eventData.getEventType());
@@ -61,7 +58,6 @@ public class EventProcessingService {
             RegisteredEvent savedEvent = eventRepository.save(registeredEvent);
             log.info("✅ Event saved to DB with ID: {}", savedEvent.getId());
 
-            // Отправляем подтверждение
             EventResponse response = new EventResponse();
             response.setOriginalEventId(eventData.getEventId());
             response.setRegisteredEventId(savedEvent.getId());
@@ -77,15 +73,12 @@ public class EventProcessingService {
         }
     }
 
-    // Внутренний класс для десериализации
     public static class EventData {
         private UUID eventId;
         private String eventType;
         private String serviceName;
         private String payload;
         private LocalDateTime createdAt;
-
-        // Геттеры и сеттеры
         public UUID getEventId() { return eventId; }
         public void setEventId(UUID eventId) { this.eventId = eventId; }
         public String getEventType() { return eventType; }

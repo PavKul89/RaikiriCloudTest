@@ -14,7 +14,7 @@
     <packaging>jar</packaging>
 
     <name>Event Registry</name>
-    <description>Receives and processes events from Kafka</description> <!-- Исправлено описание -->
+    <description>Receives and processes events from Kafka</description>
 
     <dependencies>
         <dependency>
@@ -72,7 +72,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <!-- Убедитесь, что mainClass правильный для этого модуля! -->
                 <configuration>
                     <mainClass>com.example.eventregistry.EventRegistryApplication</mainClass>
                     <excludes>
