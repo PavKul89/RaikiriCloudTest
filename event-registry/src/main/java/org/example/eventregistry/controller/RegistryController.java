@@ -150,14 +150,19 @@ public class RegistryController {
                 if (event != null) {
                     return ResponseEntity.ok(event);
                 }
-                return ResponseEntity.notFound().build();
-            } catch (IllegalArgumentException e) {
+                // Если не найден по UUID, ищем по части ID
                 List<RegisteredEvent> events = searchEventsByPartialId(id);
                 if (!events.isEmpty()) {
                     return ResponseEntity.ok(events);
                 }
-                return ResponseEntity.notFound().build();
+            } catch (IllegalArgumentException e) {
+                // Если не валидный UUID, ищем по части ID
+                List<RegisteredEvent> events = searchEventsByPartialId(id);
+                if (!events.isEmpty()) {
+                    return ResponseEntity.ok(events);
+                }
             }
+            return ResponseEntity.notFound().build();
         }
 
         if (originalId != null) {
@@ -167,14 +172,19 @@ public class RegistryController {
                 if (event != null) {
                     return ResponseEntity.ok(event);
                 }
-                return ResponseEntity.notFound().build();
-            } catch (IllegalArgumentException e) {
+                // Если не найден по UUID, ищем по части оригинального ID
                 List<RegisteredEvent> events = searchEventsByPartialOriginalId(originalId);
                 if (!events.isEmpty()) {
                     return ResponseEntity.ok(events);
                 }
-                return ResponseEntity.notFound().build();
+            } catch (IllegalArgumentException e) {
+                // Если не валидный UUID, ищем по части оригинального ID
+                List<RegisteredEvent> events = searchEventsByPartialOriginalId(originalId);
+                if (!events.isEmpty()) {
+                    return ResponseEntity.ok(events);
+                }
             }
+            return ResponseEntity.notFound().build();
         }
 
         return ResponseEntity.notFound().build();
