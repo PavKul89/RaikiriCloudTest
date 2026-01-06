@@ -14,5 +14,5 @@ public class EventResponse {
     private UUID registeredEventId;
     private String status;
     private LocalDateTime processedAt;
-    private String registryServiceName = "event-registry";
+    private String registryServiceName;
 }

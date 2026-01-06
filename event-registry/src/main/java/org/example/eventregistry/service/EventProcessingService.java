@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.eventregistry.dto.EventResponse;
 import org.example.eventregistry.entity.RegisteredEvent;
 import org.example.eventregistry.repository.RegisteredEventRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -32,21 +34,22 @@ public class EventProcessingService {
     @Transactional
     public void processEvent(String eventJson) {
         try {
-            log.info("Received event JSON: {}", eventJson);
+            log.info("📥 Received event JSON: {}", eventJson);
 
             EventData eventData = objectMapper.readValue(eventJson, EventData.class);
 
             log.info("=== START PROCESSING EVENT ===");
             log.info("Event ID: {}", eventData.getEventId());
+            log.info("Type: {}, Service: {}",
+                    eventData.getEventType(), eventData.getServiceName());
 
             RegisteredEvent existingEvent = eventRepository
                     .findByOriginalEventId(eventData.getEventId());
 
             if (existingEvent != null) {
-                log.warn("Event already registered: {}", eventData.getEventId());
+                log.warn("⚠️ Event already registered: {}", eventData.getEventId());
                 return;
             }
-
             RegisteredEvent registeredEvent = new RegisteredEvent();
             registeredEvent.setOriginalEventId(eventData.getEventId());
             registeredEvent.setEventType(eventData.getEventType());
@@ -67,18 +70,20 @@ public class EventProcessingService {
 
             kafkaTemplate.send("events.processed", response);
             log.info("📤 Confirmation sent for event: {}", eventData.getEventId());
+            log.info("=== PROCESSING COMPLETED ===");
 
         } catch (Exception e) {
             log.error("❌ Error processing event. JSON: {}", eventJson, e);
         }
     }
 
-    public static class EventData {
+    private static class EventData {
         private UUID eventId;
         private String eventType;
         private String serviceName;
         private String payload;
         private LocalDateTime createdAt;
+
         public UUID getEventId() { return eventId; }
         public void setEventId(UUID eventId) { this.eventId = eventId; }
         public String getEventType() { return eventType; }
@@ -89,6 +94,18 @@ public class EventProcessingService {
         public void setPayload(String payload) { this.payload = payload; }
         public LocalDateTime getCreatedAt() { return createdAt; }
         public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    }
+
+    public Page<RegisteredEvent> getEventsWithFilters(
+            Pageable pageable,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            String eventType,
+            String serviceName) {
+
+        return eventRepository.findWithFilters(
+                pageable, startDate, endDate, eventType, serviceName
+        );
     }
 
     public long getTotalRegisteredEvents() {
@@ -105,5 +122,13 @@ public class EventProcessingService {
 
     public RegisteredEvent getEventByOriginalId(UUID originalId) {
         return eventRepository.findByOriginalEventId(originalId);
+    }
+
+    public List<String> getDistinctEventTypes() {
+        return eventRepository.findDistinctEventTypes();
+    }
+
+    public List<String> getDistinctServiceNames() {
+        return eventRepository.findDistinctServiceNames();
     }
 }

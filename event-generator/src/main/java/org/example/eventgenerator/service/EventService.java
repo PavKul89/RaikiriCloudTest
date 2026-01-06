@@ -22,7 +22,6 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final KafkaTemplate<String, EventMessage> kafkaTemplate;
-    private final EventConfirmationService confirmationService; // Добавили
 
     private static final String EVENT_TOPIC = "events.created";
 
@@ -122,12 +121,20 @@ public class EventService {
         return eventRepository.count();
     }
 
-    public long getProcessedEvents() {
-        return confirmationService.getProcessedEventsCount();
+    public long getProcessedEventsCount() {
+        return eventRepository.countByIsProcessed(true);
     }
 
-    public long getUnprocessedEvents() {
-        return confirmationService.getUnprocessedEventsCount();
+    public long getUnprocessedEventsCount() {
+        return eventRepository.countByIsProcessed(false);
+    }
+
+    public List<Event> getProcessedEventsList() {
+        return eventRepository.findByIsProcessedTrue();
+    }
+
+    public List<Event> getUnprocessedEventsList() {
+        return eventRepository.findByIsProcessedFalse();
     }
 
     public List<Event> getAllEvents() {
@@ -136,5 +143,12 @@ public class EventService {
 
     public Event getEventById(UUID id) {
         return eventRepository.findById(id).orElse(null);
+    }
+
+    public List<Event> searchEventsByPartialId(String partialId) {
+        List<Event> allEvents = eventRepository.findAll();
+        return allEvents.stream()
+                .filter(event -> event.getId().toString().contains(partialId))
+                .collect(java.util.stream.Collectors.toList());
     }
 }
