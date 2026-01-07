@@ -73,10 +73,9 @@ class RegistryControllerTest {
 
     @Test
     void getStats_ShouldReturnStatistics() throws Exception {
-        // Arrange
+
         when(eventService.getTotalRegisteredEvents()).thenReturn(15L);
 
-        // Act & Assert
         mockMvc.perform(get("/api/registry/stats"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.serviceName").value("event-registry"))
@@ -89,7 +88,6 @@ class RegistryControllerTest {
 
     @Test
     void getEventsWithFilters_WithDefaultParameters_ShouldReturnPaginatedEvents() throws Exception {
-        // Arrange
         List<RegisteredEvent> events = Arrays.asList(testRegisteredEvent);
         Page<RegisteredEvent> page = new PageImpl<>(events, PageRequest.of(0, 20), 1);
 
@@ -98,7 +96,6 @@ class RegistryControllerTest {
                 eq(null), eq(null), eq(null), eq(null))
         ).thenReturn(page);
 
-        // Act & Assert
         mockMvc.perform(get("/api/registry/events"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(testEventId.toString()))
@@ -119,11 +116,10 @@ class RegistryControllerTest {
 
     @Test
     void getAllEvents_ShouldReturnAllEvents() throws Exception {
-        // Arrange
+
         List<RegisteredEvent> events = Arrays.asList(testRegisteredEvent);
         when(eventService.getAllEvents()).thenReturn(events);
 
-        // Act & Assert
         mockMvc.perform(get("/api/registry/events/all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(testEventId.toString()))
@@ -134,10 +130,9 @@ class RegistryControllerTest {
 
     @Test
     void getEventById_WithValidUUID_ShouldReturnEvent() throws Exception {
-        // Arrange
+
         when(eventService.getEventById(testEventId)).thenReturn(testRegisteredEvent);
 
-        // Act & Assert
         mockMvc.perform(get("/api/registry/events/{id}", testEventId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(testEventId.toString()))
@@ -148,10 +143,9 @@ class RegistryControllerTest {
 
     @Test
     void getEventById_WithInvalidUUID_ShouldReturnBadRequest() throws Exception {
-        // Arrange
+
         String invalidUuid = "invalid-uuid";
 
-        // Act & Assert
         mockMvc.perform(get("/api/registry/events/{id}", invalidUuid))
                 .andExpect(status().isBadRequest());
 
@@ -160,10 +154,9 @@ class RegistryControllerTest {
 
     @Test
     void getEventById_WithNonExistentUUID_ShouldReturnNotFound() throws Exception {
-        // Arrange
+
         when(eventService.getEventById(testEventId)).thenReturn(null);
 
-        // Act & Assert
         mockMvc.perform(get("/api/registry/events/{id}", testEventId))
                 .andExpect(status().isNotFound());
 
@@ -172,10 +165,9 @@ class RegistryControllerTest {
 
     @Test
     void getEventByOriginalId_WithValidUUID_ShouldReturnEvent() throws Exception {
-        // Arrange
+
         when(eventService.getEventByOriginalId(testOriginalEventId)).thenReturn(testRegisteredEvent);
 
-        // Act & Assert
         mockMvc.perform(get("/api/registry/events/original/{originalId}", testOriginalEventId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(testEventId.toString()))
@@ -186,11 +178,10 @@ class RegistryControllerTest {
 
     @Test
     void getEventTypes_ShouldReturnDistinctEventTypes() throws Exception {
-        // Arrange
+
         List<String> eventTypes = Arrays.asList("SYSTEM_EVENT", "MANUAL_EVENT", "ERROR_EVENT");
         when(eventService.getDistinctEventTypes()).thenReturn(eventTypes);
 
-        // Act & Assert
         mockMvc.perform(get("/api/registry/events/types"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0]").value("SYSTEM_EVENT"))
@@ -202,11 +193,10 @@ class RegistryControllerTest {
 
     @Test
     void getServiceNames_ShouldReturnDistinctServiceNames() throws Exception {
-        // Arrange
+
         List<String> serviceNames = Arrays.asList("event-generator", "user-service", "payment-service");
         when(eventService.getDistinctServiceNames()).thenReturn(serviceNames);
 
-        // Act & Assert
         mockMvc.perform(get("/api/registry/events/services"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0]").value("event-generator"))
@@ -218,10 +208,9 @@ class RegistryControllerTest {
 
     @Test
     void searchEvents_WithIdParameter_ShouldSearchById() throws Exception {
-        // Arrange
+
         when(eventService.getEventById(testEventId)).thenReturn(testRegisteredEvent);
 
-        // Act & Assert
         mockMvc.perform(get("/api/registry/events/search")
                         .param("id", testEventId.toString()))
                 .andExpect(status().isOk())
@@ -232,10 +221,9 @@ class RegistryControllerTest {
 
     @Test
     void searchEvents_WithOriginalIdParameter_ShouldSearchByOriginalId() throws Exception {
-        // Arrange
+
         when(eventService.getEventByOriginalId(testOriginalEventId)).thenReturn(testRegisteredEvent);
 
-        // Act & Assert
         mockMvc.perform(get("/api/registry/events/search")
                         .param("originalId", testOriginalEventId.toString()))
                 .andExpect(status().isOk())
@@ -247,11 +235,10 @@ class RegistryControllerTest {
 
     @Test
     void searchEvents_WithInvalidUUID_ShouldReturnNotFound() throws Exception {
-        // Arrange
+
         String invalidUuid = "invalid";
         when(eventService.getAllEvents()).thenReturn(Collections.singletonList(testRegisteredEvent));
 
-        // Act & Assert
         mockMvc.perform(get("/api/registry/events/search")
                         .param("id", invalidUuid))
                 .andExpect(status().isNotFound());
@@ -261,11 +248,10 @@ class RegistryControllerTest {
 
     @Test
     void searchEvents_WithPartialIdThatMatches_ShouldReturnEvent() throws Exception {
-        // Arrange
+
         String partialId = testEventId.toString().substring(0, 8);
         when(eventService.getAllEvents()).thenReturn(Collections.singletonList(testRegisteredEvent));
 
-        // Act & Assert
         mockMvc.perform(get("/api/registry/events/search")
                         .param("id", partialId))
                 .andExpect(status().isOk())
@@ -276,7 +262,6 @@ class RegistryControllerTest {
 
     @Test
     void searchEvents_WithoutParameters_ShouldReturnBadRequest() throws Exception {
-        // Act & Assert
         mockMvc.perform(get("/api/registry/events/search"))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Please provide 'id' or 'originalId' parameter"));
@@ -288,10 +273,9 @@ class RegistryControllerTest {
 
     @Test
     void searchEvents_WithBothParameters_ShouldPrioritizeId() throws Exception {
-        // Arrange
+
         when(eventService.getEventById(testEventId)).thenReturn(testRegisteredEvent);
 
-        // Act & Assert
         mockMvc.perform(get("/api/registry/events/search")
                         .param("id", testEventId.toString())
                         .param("originalId", testOriginalEventId.toString()))

@@ -150,13 +150,11 @@ public class RegistryController {
                 if (event != null) {
                     return ResponseEntity.ok(event);
                 }
-                // Если не найден по UUID, ищем по части ID
                 List<RegisteredEvent> events = searchEventsByPartialId(id);
                 if (!events.isEmpty()) {
                     return ResponseEntity.ok(events);
                 }
             } catch (IllegalArgumentException e) {
-                // Если не валидный UUID, ищем по части ID
                 List<RegisteredEvent> events = searchEventsByPartialId(id);
                 if (!events.isEmpty()) {
                     return ResponseEntity.ok(events);
@@ -172,13 +170,11 @@ public class RegistryController {
                 if (event != null) {
                     return ResponseEntity.ok(event);
                 }
-                // Если не найден по UUID, ищем по части оригинального ID
                 List<RegisteredEvent> events = searchEventsByPartialOriginalId(originalId);
                 if (!events.isEmpty()) {
                     return ResponseEntity.ok(events);
                 }
             } catch (IllegalArgumentException e) {
-                // Если не валидный UUID, ищем по части оригинального ID
                 List<RegisteredEvent> events = searchEventsByPartialOriginalId(originalId);
                 if (!events.isEmpty()) {
                     return ResponseEntity.ok(events);

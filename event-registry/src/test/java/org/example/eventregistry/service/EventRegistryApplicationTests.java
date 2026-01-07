@@ -65,16 +65,13 @@ class EventProcessingServiceTest {
         testRegisteredEventId = UUID.randomUUID();
         testCreatedAt = LocalDateTime.now();
 
-        // Получаем класс EventData
         eventDataClass = Class.forName(
                 "org.example.eventregistry.service.EventProcessingService$EventData");
 
-        // Создаем экземпляр приватного класса EventData через рефлексию
         Constructor<?> constructor = eventDataClass.getDeclaredConstructor();
         constructor.setAccessible(true);
         testEventData = constructor.newInstance();
 
-        // Устанавливаем значения через рефлексию
         ReflectionTestUtils.setField(testEventData, "eventId", testEventId);
         ReflectionTestUtils.setField(testEventData, "eventType", "SYSTEM_EVENT");
         ReflectionTestUtils.setField(testEventData, "serviceName", "event-generator");
@@ -98,17 +95,14 @@ class EventProcessingServiceTest {
                 "\"serviceName\":\"event-generator\",\"payload\":\"Test payload\"," +
                 "\"createdAt\":\"" + testCreatedAt + "\"}";
 
-        // Используем thenAnswer для правильного типа
         when(objectMapper.readValue(eq(eventJson), eq(eventDataClass)))
                 .thenAnswer(invocation -> testEventData);
 
         when(eventRepository.findByOriginalEventId(testEventId)).thenReturn(null);
         when(eventRepository.save(any(RegisteredEvent.class))).thenReturn(testRegisteredEvent);
 
-        // Act
         eventProcessingService.processEvent(eventJson);
 
-        // Assert
         verify(objectMapper).readValue(eq(eventJson), eq(eventDataClass));
         verify(eventRepository).findByOriginalEventId(testEventId);
         verify(eventRepository).save(eventCaptor.capture());
@@ -133,7 +127,7 @@ class EventProcessingServiceTest {
 
     @Test
     void processEvent_WhenEventAlreadyRegistered_ShouldSkipProcessing() throws Exception {
-        // Arrange
+
         String eventJson = "{\"eventId\":\"" + testEventId + "\"}";
 
         when(objectMapper.readValue(eq(eventJson), eq(eventDataClass)))
@@ -141,10 +135,8 @@ class EventProcessingServiceTest {
 
         when(eventRepository.findByOriginalEventId(testEventId)).thenReturn(testRegisteredEvent);
 
-        // Act
         eventProcessingService.processEvent(eventJson);
 
-        // Assert
         verify(objectMapper).readValue(eq(eventJson), eq(eventDataClass));
         verify(eventRepository).findByOriginalEventId(testEventId);
         verify(eventRepository, never()).save(any());
@@ -153,16 +145,14 @@ class EventProcessingServiceTest {
 
     @Test
     void processEvent_WhenInvalidJson_ShouldLogError() throws Exception {
-        // Arrange
+
         String invalidJson = "invalid-json";
 
         when(objectMapper.readValue(eq(invalidJson), eq(eventDataClass)))
                 .thenThrow(new com.fasterxml.jackson.core.JsonParseException(null, "Invalid JSON"));
 
-        // Act
         eventProcessingService.processEvent(invalidJson);
 
-        // Assert
         verify(objectMapper).readValue(eq(invalidJson), eq(eventDataClass));
         verify(eventRepository, never()).findByOriginalEventId(any());
         verify(eventRepository, never()).save(any());
@@ -171,7 +161,7 @@ class EventProcessingServiceTest {
 
     @Test
     void processEvent_WhenDatabaseError_ShouldLogError() throws Exception {
-        // Arrange
+
         String eventJson = "{\"eventId\":\"" + testEventId + "\"}";
 
         when(objectMapper.readValue(eq(eventJson), eq(eventDataClass)))
@@ -181,10 +171,8 @@ class EventProcessingServiceTest {
         when(eventRepository.save(any(RegisteredEvent.class)))
                 .thenThrow(new RuntimeException("Database error"));
 
-        // Act
         eventProcessingService.processEvent(eventJson);
 
-        // Assert
         verify(objectMapper).readValue(eq(eventJson), eq(eventDataClass));
         verify(eventRepository).findByOriginalEventId(testEventId);
         verify(eventRepository).save(any());
@@ -193,7 +181,7 @@ class EventProcessingServiceTest {
 
     @Test
     void processEvent_WhenKafkaSendError_ShouldLogError() throws Exception {
-        // Arrange
+
         String eventJson = "{\"eventId\":\"" + testEventId + "\"}";
 
         when(objectMapper.readValue(eq(eventJson), eq(eventDataClass)))
@@ -204,10 +192,8 @@ class EventProcessingServiceTest {
 
         doThrow(new RuntimeException("Kafka error")).when(kafkaTemplate).send(eq("events.processed"), any());
 
-        // Act
         eventProcessingService.processEvent(eventJson);
 
-        // Assert
         verify(objectMapper).readValue(eq(eventJson), eq(eventDataClass));
         verify(eventRepository).findByOriginalEventId(testEventId);
         verify(eventRepository).save(any());
@@ -216,10 +202,9 @@ class EventProcessingServiceTest {
 
     @Test
     void processEvent_WithNullPayload_ShouldProcessCorrectly() throws Exception {
-        // Arrange
+
         String eventJson = "{\"eventId\":\"" + testEventId + "\"}";
 
-        // Создаем EventData с null payload
         Constructor<?> constructor = eventDataClass.getDeclaredConstructor();
         constructor.setAccessible(true);
         Object eventDataWithNullPayload = constructor.newInstance();
@@ -235,10 +220,8 @@ class EventProcessingServiceTest {
         when(eventRepository.findByOriginalEventId(testEventId)).thenReturn(null);
         when(eventRepository.save(any(RegisteredEvent.class))).thenReturn(testRegisteredEvent);
 
-        // Act
         eventProcessingService.processEvent(eventJson);
 
-        // Assert
         verify(eventRepository).save(eventCaptor.capture());
         RegisteredEvent savedEvent = eventCaptor.getValue();
         assertNull(savedEvent.getPayload());
@@ -246,10 +229,9 @@ class EventProcessingServiceTest {
 
     @Test
     void processEvent_WithNullCreatedAt_ShouldProcessCorrectly() throws Exception {
-        // Arrange
+
         String eventJson = "{\"eventId\":\"" + testEventId + "\"}";
 
-        // Создаем EventData с null createdAt
         Constructor<?> constructor = eventDataClass.getDeclaredConstructor();
         constructor.setAccessible(true);
         Object eventDataWithNullCreatedAt = constructor.newInstance();
@@ -265,10 +247,8 @@ class EventProcessingServiceTest {
         when(eventRepository.findByOriginalEventId(testEventId)).thenReturn(null);
         when(eventRepository.save(any(RegisteredEvent.class))).thenReturn(testRegisteredEvent);
 
-        // Act
         eventProcessingService.processEvent(eventJson);
 
-        // Assert
         verify(eventRepository).save(eventCaptor.capture());
         RegisteredEvent savedEvent = eventCaptor.getValue();
         assertNull(savedEvent.getCreatedAt());
@@ -287,11 +267,9 @@ class EventProcessingServiceTest {
         when(eventRepository.findWithFilters(pageable, startDate, endDate, eventType, serviceName))
                 .thenReturn(expectedPage);
 
-        // Act
         Page<RegisteredEvent> result = eventProcessingService.getEventsWithFilters(
                 pageable, startDate, endDate, eventType, serviceName);
 
-        // Assert
         assertNotNull(result);
         assertEquals(1, result.getContent().size());
         assertEquals(testRegisteredEvent, result.getContent().get(0));
@@ -300,17 +278,15 @@ class EventProcessingServiceTest {
 
     @Test
     void getEventsWithFilters_WithNullParameters_ShouldCallRepositoryWithNulls() {
-        // Arrange
+
         Pageable pageable = PageRequest.of(0, 10);
         Page<RegisteredEvent> expectedPage = new PageImpl<>(Arrays.asList(testRegisteredEvent));
         when(eventRepository.findWithFilters(pageable, null, null, null, null))
                 .thenReturn(expectedPage);
 
-        // Act
         Page<RegisteredEvent> result = eventProcessingService.getEventsWithFilters(
                 pageable, null, null, null, null);
 
-        // Assert
         assertNotNull(result);
         assertEquals(1, result.getContent().size());
         verify(eventRepository).findWithFilters(pageable, null, null, null, null);
@@ -318,28 +294,24 @@ class EventProcessingServiceTest {
 
     @Test
     void getTotalRegisteredEvents_ShouldReturnCount() {
-        // Arrange
+
         long expectedCount = 100L;
         when(eventRepository.count()).thenReturn(expectedCount);
 
-        // Act
         long result = eventProcessingService.getTotalRegisteredEvents();
 
-        // Assert
         assertEquals(expectedCount, result);
         verify(eventRepository).count();
     }
 
     @Test
     void getAllEvents_ShouldReturnAllEvents() {
-        // Arrange
+
         List<RegisteredEvent> expectedEvents = Arrays.asList(testRegisteredEvent);
         when(eventRepository.findAll()).thenReturn(expectedEvents);
 
-        // Act
         List<RegisteredEvent> result = eventProcessingService.getAllEvents();
 
-        // Assert
         assertEquals(1, result.size());
         assertEquals(testRegisteredEvent, result.get(0));
         verify(eventRepository).findAll();
@@ -347,14 +319,12 @@ class EventProcessingServiceTest {
 
     @Test
     void getEventById_WithExistingId_ShouldReturnEvent() {
-        // Arrange
+
         when(eventRepository.findById(testRegisteredEventId))
                 .thenReturn(Optional.of(testRegisteredEvent));
 
-        // Act
         RegisteredEvent result = eventProcessingService.getEventById(testRegisteredEventId);
 
-        // Assert
         assertNotNull(result);
         assertEquals(testRegisteredEvent, result);
         verify(eventRepository).findById(testRegisteredEventId);
@@ -365,24 +335,20 @@ class EventProcessingServiceTest {
         // Arrange
         when(eventRepository.findById(testRegisteredEventId)).thenReturn(Optional.empty());
 
-        // Act
         RegisteredEvent result = eventProcessingService.getEventById(testRegisteredEventId);
 
-        // Assert
         assertNull(result);
         verify(eventRepository).findById(testRegisteredEventId);
     }
 
     @Test
     void getEventByOriginalId_WithExistingOriginalId_ShouldReturnEvent() {
-        // Arrange
+
         when(eventRepository.findByOriginalEventId(testEventId))
                 .thenReturn(testRegisteredEvent);
 
-        // Act
         RegisteredEvent result = eventProcessingService.getEventByOriginalId(testEventId);
 
-        // Assert
         assertNotNull(result);
         assertEquals(testRegisteredEvent, result);
         verify(eventRepository).findByOriginalEventId(testEventId);
@@ -390,27 +356,23 @@ class EventProcessingServiceTest {
 
     @Test
     void getEventByOriginalId_WithNonExistingOriginalId_ShouldReturnNull() {
-        // Arrange
+
         when(eventRepository.findByOriginalEventId(testEventId)).thenReturn(null);
 
-        // Act
         RegisteredEvent result = eventProcessingService.getEventByOriginalId(testEventId);
 
-        // Assert
         assertNull(result);
         verify(eventRepository).findByOriginalEventId(testEventId);
     }
 
     @Test
     void getDistinctEventTypes_ShouldReturnListOfTypes() {
-        // Arrange
+
         List<String> expectedTypes = Arrays.asList("SYSTEM_EVENT", "USER_EVENT", "ERROR_EVENT");
         when(eventRepository.findDistinctEventTypes()).thenReturn(expectedTypes);
 
-        // Act
         List<String> result = eventProcessingService.getDistinctEventTypes();
 
-        // Assert
         assertEquals(3, result.size());
         assertTrue(result.contains("SYSTEM_EVENT"));
         assertTrue(result.contains("USER_EVENT"));
@@ -420,14 +382,12 @@ class EventProcessingServiceTest {
 
     @Test
     void getDistinctServiceNames_ShouldReturnListOfServices() {
-        // Arrange
+
         List<String> expectedServices = Arrays.asList("event-generator", "user-service", "auth-service");
         when(eventRepository.findDistinctServiceNames()).thenReturn(expectedServices);
 
-        // Act
         List<String> result = eventProcessingService.getDistinctServiceNames();
 
-        // Assert
         assertEquals(3, result.size());
         assertTrue(result.contains("event-generator"));
         assertTrue(result.contains("user-service"));
@@ -437,44 +397,38 @@ class EventProcessingServiceTest {
 
     @Test
     void getDistinctEventTypes_WhenEmpty_ShouldReturnEmptyList() {
-        // Arrange
+
         List<String> expectedTypes = Arrays.asList();
         when(eventRepository.findDistinctEventTypes()).thenReturn(expectedTypes);
 
-        // Act
         List<String> result = eventProcessingService.getDistinctEventTypes();
 
-        // Assert
         assertTrue(result.isEmpty());
         verify(eventRepository).findDistinctEventTypes();
     }
 
     @Test
     void getDistinctServiceNames_WhenEmpty_ShouldReturnEmptyList() {
-        // Arrange
+
         List<String> expectedServices = Arrays.asList();
         when(eventRepository.findDistinctServiceNames()).thenReturn(expectedServices);
 
-        // Act
         List<String> result = eventProcessingService.getDistinctServiceNames();
 
-        // Assert
         assertTrue(result.isEmpty());
         verify(eventRepository).findDistinctServiceNames();
     }
 
     @Test
     void processEvent_ShouldHandleJsonProcessingException() throws Exception {
-        // Arrange
+
         String eventJson = "{\"invalid\":json}";
 
         when(objectMapper.readValue(eq(eventJson), eq(eventDataClass)))
                 .thenThrow(new com.fasterxml.jackson.databind.JsonMappingException(null, "Invalid JSON"));
 
-        // Act
         eventProcessingService.processEvent(eventJson);
 
-        // Assert
         verify(objectMapper).readValue(eq(eventJson), eq(eventDataClass));
         verify(eventRepository, never()).findByOriginalEventId(any());
         verify(eventRepository, never()).save(any());

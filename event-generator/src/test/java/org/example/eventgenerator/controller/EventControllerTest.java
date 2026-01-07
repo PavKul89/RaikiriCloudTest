@@ -9,7 +9,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -43,7 +42,7 @@ class EventControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(eventController).build();
         objectMapper = new ObjectMapper();
-        objectMapper.findAndRegisterModules(); // для поддержки LocalDateTime
+        objectMapper.findAndRegisterModules();
 
         testEventId = UUID.randomUUID();
         testEvent = new Event();
@@ -62,7 +61,6 @@ class EventControllerTest {
         when(eventService.getProcessedEventsCount()).thenReturn(7L);
         when(eventService.getUnprocessedEventsCount()).thenReturn(3L);
 
-        // Act & Assert
         mockMvc.perform(get("/api/events/stats"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.serviceName").value("event-generator"))
@@ -95,10 +93,8 @@ class EventControllerTest {
 
     @Test
     void getEventById_WithValidUUID_ShouldReturnEvent() throws Exception {
-        // Arrange
         when(eventService.getEventById(testEventId)).thenReturn(testEvent);
 
-        // Act & Assert
         mockMvc.perform(get("/api/events/{id}", testEventId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(testEventId.toString()))
@@ -109,10 +105,9 @@ class EventControllerTest {
 
     @Test
     void getEventById_WithInvalidUUID_ShouldReturnBadRequest() throws Exception {
-        // Arrange
+
         String invalidUuid = "invalid-uuid";
 
-        // Act & Assert
         mockMvc.perform(get("/api/events/{id}", invalidUuid))
                 .andExpect(status().isBadRequest());
 
@@ -121,10 +116,9 @@ class EventControllerTest {
 
     @Test
     void getEventById_WithNonExistentUUID_ShouldReturnNotFound() throws Exception {
-        // Arrange
+
         when(eventService.getEventById(testEventId)).thenReturn(null);
 
-        // Act & Assert
         mockMvc.perform(get("/api/events/{id}", testEventId))
                 .andExpect(status().isNotFound());
 
@@ -133,10 +127,9 @@ class EventControllerTest {
 
     @Test
     void generateEventManually_ShouldReturnCreatedEvent() throws Exception {
-        // Arrange
+
         when(eventService.generateEventManually(any(), any())).thenReturn(testEvent);
 
-        // Act & Assert
         mockMvc.perform(post("/api/events/generate")
                         .param("eventType", "MANUAL_EVENT")
                         .param("payload", "Custom payload"))
@@ -149,10 +142,9 @@ class EventControllerTest {
 
     @Test
     void generateEventManually_WithoutParameters_ShouldUseDefaults() throws Exception {
-        // Arrange
+
         when(eventService.generateEventManually(null, null)).thenReturn(testEvent);
 
-        // Act & Assert
         mockMvc.perform(post("/api/events/generate"))
                 .andExpect(status().isOk());
 
@@ -161,10 +153,8 @@ class EventControllerTest {
 
     @Test
     void generateEventManually_WhenServiceThrowsException_ShouldReturnInternalServerError() throws Exception {
-        // Arrange
-        when(eventService.generateEventManually(any(), any())).thenThrow(new RuntimeException("DB error"));
 
-        // Act & Assert
+        when(eventService.generateEventManually(any(), any())).thenThrow(new RuntimeException("DB error"));
         mockMvc.perform(post("/api/events/generate"))
                 .andExpect(status().isInternalServerError());
 
@@ -173,12 +163,11 @@ class EventControllerTest {
 
     @Test
     void getProcessedEventsList_ShouldReturnProcessedEvents() throws Exception {
-        // Arrange
+
         testEvent.setIsProcessed(true);
         List<Event> processedEvents = Arrays.asList(testEvent);
         when(eventService.getProcessedEventsList()).thenReturn(processedEvents);
 
-        // Act & Assert
         mockMvc.perform(get("/api/events/processed/list"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(testEventId.toString()))
@@ -189,11 +178,9 @@ class EventControllerTest {
 
     @Test
     void getUnprocessedEventsList_ShouldReturnUnprocessedEvents() throws Exception {
-        // Arrange
         List<Event> unprocessedEvents = Arrays.asList(testEvent);
         when(eventService.getUnprocessedEventsList()).thenReturn(unprocessedEvents);
 
-        // Act & Assert
         mockMvc.perform(get("/api/events/unprocessed/list"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(testEventId.toString()))
@@ -204,10 +191,9 @@ class EventControllerTest {
 
     @Test
     void searchEvents_WithValidUUID_ShouldReturnEvent() throws Exception {
-        // Arrange
+
         when(eventService.getEventById(testEventId)).thenReturn(testEvent);
 
-        // Act & Assert
         mockMvc.perform(get("/api/events/search")
                         .param("id", testEventId.toString()))
                 .andExpect(status().isOk())
@@ -219,12 +205,11 @@ class EventControllerTest {
 
     @Test
     void searchEvents_WithPartialId_ShouldReturnList() throws Exception {
-        // Arrange
+
         String partialId = "ff86";
         List<Event> events = Arrays.asList(testEvent);
         when(eventService.searchEventsByPartialId(partialId)).thenReturn(events);
 
-        // Act & Assert
         mockMvc.perform(get("/api/events/search")
                         .param("id", partialId))
                 .andExpect(status().isOk())
@@ -236,7 +221,7 @@ class EventControllerTest {
 
     @Test
     void searchEvents_WithoutId_ShouldReturnBadRequest() throws Exception {
-        // Act & Assert
+
         mockMvc.perform(get("/api/events/search"))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Parameter 'id' is required"));
@@ -247,7 +232,7 @@ class EventControllerTest {
 
     @Test
     void searchEvents_WithEmptyId_ShouldReturnBadRequest() throws Exception {
-        // Act & Assert
+
         mockMvc.perform(get("/api/events/search")
                         .param("id", ""))
                 .andExpect(status().isBadRequest());
