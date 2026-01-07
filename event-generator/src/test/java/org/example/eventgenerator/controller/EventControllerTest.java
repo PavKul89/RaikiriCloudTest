@@ -56,7 +56,6 @@ class EventControllerTest {
 
     @Test
     void getStats_ShouldReturnStatistics() throws Exception {
-        // Arrange
         when(eventService.getTotalEvents()).thenReturn(10L);
         when(eventService.getProcessedEventsCount()).thenReturn(7L);
         when(eventService.getUnprocessedEventsCount()).thenReturn(3L);
@@ -77,11 +76,8 @@ class EventControllerTest {
 
     @Test
     void getAllEvents_ShouldReturnListOfEvents() throws Exception {
-        // Arrange
         List<Event> events = Arrays.asList(testEvent);
         when(eventService.getAllEvents()).thenReturn(events);
-
-        // Act & Assert
         mockMvc.perform(get("/api/events"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(testEventId.toString()))
