@@ -68,7 +68,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: events_db
     ports:
-      - "5433:5432"   # 5433 чтобы не конфликтовать с локальным postgres
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
